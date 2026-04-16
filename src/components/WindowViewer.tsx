@@ -54,7 +54,7 @@ export function WindowViewer({
 
   const translateY = animatedY.interpolate({
     inputRange: [-1, 1],
-    outputRange: [maxOffsetY, -maxOffsetY],
+    outputRange: [maxOffsetY, -maxOffsetY], // inverted: tilt forward = pan down
   });
 
   return (
