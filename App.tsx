@@ -4,11 +4,11 @@ import { StatusBar } from 'expo-status-bar';
 
 import { useDeviceOrientation } from './src/hooks/useDeviceOrientation';
 import { WindowViewer } from './src/components/WindowViewer';
-import { WindowFrame } from './src/components/WindowFrame';
 import { DebugOverlay } from './src/components/DebugOverlay';
 
 const SCENE = require('./images/window-view.png');
-const IMAGE_ASPECT = 3.0;
+const IMAGE_ASPECT = 1.0; // window-view.png is 2048×2048 (square)
+const ZOOM = 1.3;         // 30% overhang on the shorter viewport axis
 
 export default function App() {
   // Animated values are driven directly by the sensor callback in the hook —
@@ -29,14 +29,12 @@ export default function App() {
 
       <WindowViewer
         source={SCENE}
-        tiltX={tiltX}
-        tiltY={tiltY}
         imageAspect={IMAGE_ASPECT}
+        zoom={ZOOM}
         animatedX={animX}
         animatedY={animY}
       />
 
-      <WindowFrame />
       <DebugOverlay tiltX={tiltX} tiltY={tiltY} isReady={isReady} neutral={neutral} />
 
       {!isReady && (
