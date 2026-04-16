@@ -27,7 +27,7 @@ An interactive mobile experience where the viewer physically tilts their phone t
 │   three input paths (see below)     │  iOS, Android, web mobile, web desktop
 ├─────────────────────────────────────┤
 │   WindowViewer (component)          │  Panning image renderer
-│   Animated.spring + nativeDriver    │  GPU-thread animation
+│   Animated.Value.interpolate        │  Direct sensor→transform mapping
 ├─────────────────────────────────────┤
 │   WindowFrame (component)           │  Decorative overlay
 │   Pure RN StyleSheet, no assets     │
@@ -40,22 +40,27 @@ An interactive mobile experience where the viewer physically tilts their phone t
 Platform sensor input (see Input Strategy below)
       │
       ▼
-useDeviceOrientation
-  - raw gamma (left/right tilt) → tiltX [-1, 1]
-  - raw beta  (fwd/back tilt)   → tiltY [-1, 1]
-  - exponential low-pass filter applied
-  - clamped to maxAngleDeg threshold
+useDeviceOrientation  (sensor hot path, ~60 Hz)
+  - native: DeviceMotion.rotation.{gamma,beta} (radians → degrees)
+  - web mobile: DeviceOrientationEvent.{gamma,beta} (already degrees)
+  - desktop: mousemove → synthetic gamma/beta
+  - capture neutral pose on first event (relative panning)
+  - clamp (relDeg / maxAngleDeg) to [-1, 1]
+  - exponential low-pass: smoothed = smoothed*s + new*(1-s)
+  - write directly to animX.setValue / animY.setValue
       │
       ▼
 App.tsx
-  - Animated.spring drives animX / animY
-  - spring params: damping, stiffness, mass
+  - owns animX / animY as Animated.Value refs
+  - passes them into both the hook (writer) and WindowViewer (reader)
+  - NO spring / no JS state on the hot path
       │
       ▼
 WindowViewer
-  - panoramic image wider than viewport
-  - animX/animY → Animated.Image translateX/Y
-  - image travel range = panRangeX/Y × viewport size
+  - panoramic image wider than viewport (width = viewportH × imageAspect)
+  - animX.interpolate([-1,1] → [+maxOffsetX, -maxOffsetX])  ← sign flipped
+  - animY.interpolate([-1,1] → [+maxOffsetY, -maxOffsetY])  ← tilt fwd = pan down
+  - maxOffset = viewport{W,H} × panRange{X,Y}
       │
       ▼
 WindowFrame (rendered on top, pointerEvents in style)
@@ -98,13 +103,18 @@ WindowFrame (rendered on top, pointerEvents in style)
 | Web — mobile | `DeviceOrientationEvent` (browser API) | Works on phone browsers; iOS 13+ requires permission prompt |
 | Web — desktop | `mousemove` event | Fallback for development; cursor position maps to tilt |
 
-`expo-sensors` is **dynamically imported** on native only, so it is never loaded in the web bundle and cannot crash the browser. All platform branching is contained inside the hook — nothing outside it knows which path is active.
+`expo-sensors` is imported at module top; on web the hook takes the `DeviceOrientationEvent` / `mousemove` branch and never touches `DeviceMotion`. All platform branching is contained inside the hook — nothing outside it knows which path is active.
 
-### Animation on the native thread
-`Animated.spring` with `useNativeDriver: true` runs entirely on the GPU/UI thread. The JS thread is not in the hot path during panning, so frame drops from JS work cannot affect smoothness.
+### Neutral-pose capture
+The first sensor event defines the zero point (`neutral.current`). All subsequent readings are expressed relative to that pose, so panning works regardless of how the user is holding the phone when the app starts (flat on a table, upright, reclined, etc.).
 
-### Low-pass filter before spring
-Raw gyroscope data is noisy. An exponential low-pass filter (`smoothing` factor) is applied inside the hook before values reach the spring animator. This two-stage approach separates concerns: the filter removes jitter, the spring adds physical weight.
+### Direct-write to Animated.Value (no spring, no React state)
+The sensor callback calls `animX.setValue(...)` / `animY.setValue(...)` directly. No `Animated.spring`, no `useState` on the hot path — the JS→native bridge handles the transform update and React never re-renders during panning. The hook only sets React state once, to flip `isReady`.
+
+Tradeoff vs. the prior spring-based design: we lose the spring's physical "weight", but gain 1:1 responsiveness (tilt → image follows with just the smoothing lag). Feel is tuned via `smoothing` alone.
+
+### Low-pass filter on raw sensor input
+Raw gyroscope data is noisy. An exponential low-pass filter (`smoothed = smoothed*s + new*(1-s)`, default `s = 0.6`) is applied inside the hook before the clamped value is written to the `Animated.Value`.
 
 ### Panoramic image as "canvas"
 The scene is a single wide static image (3:1 to 4:1 aspect ratio). This avoids video complexity while still giving the viewer a space to explore. An ambient looping video can be substituted later with no architectural changes — `WindowViewer` accepts any `ImageSourcePropType`.
@@ -120,11 +130,11 @@ React Native Web deprecates certain style props. Two rules applied throughout:
 
 | Parameter | Location | Effect |
 |---|---|---|
-| `maxAngleDeg` | `App.tsx` → hook | Physical tilt angle that maps to full pan. Lower = more sensitive. |
-| `smoothing` | `App.tsx` → hook | 0 = raw/instant, 1 = never moves. Controls jitter removal. |
+| `maxAngleDeg` | `App.tsx` → hook | Physical tilt angle that maps to full pan. Default 25°. Lower = more sensitive. |
+| `smoothing` | `App.tsx` → hook | 0 = raw/instant, 1 = never moves. Default 0.6. Controls jitter removal and perceived lag. |
+| `intervalMs` | `App.tsx` → hook | Native sensor sample interval. Default 16ms (~60 Hz). Web uses whatever the browser emits. |
 | `IMAGE_ASPECT` | `App.tsx` | Set to your image's actual width÷height ratio. |
-| `panRangeX/Y` | `WindowViewer` props | Fraction of viewport the image travels. |
-| Spring `damping/stiffness/mass` | `App.tsx` | Controls the physical feel of the pan movement. |
+| `panRangeX/Y` | `WindowViewer` props | Fraction of viewport the image travels. Default 0.6 / 0.3. |
 
 ---
 

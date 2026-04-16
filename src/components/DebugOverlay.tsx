@@ -8,13 +8,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { DeviceMotion } from 'expo-sensors';
 
+const RAD_TO_DEG = 180 / Math.PI;
+
 interface Props {
   tiltX: number;
   tiltY: number;
   isReady: boolean;
+  neutral: { gamma: number; beta: number } | null;
 }
 
-export function DebugOverlay({ tiltX, tiltY, isReady }: Props) {
+export function DebugOverlay({ tiltX, tiltY, isReady, neutral }: Props) {
   const [raw, setRaw] = useState({ gamma: 0, beta: 0, fireCount: 0 });
   const [error, setError] = useState<string | null>(null);
   const fireCount = useRef(0);
@@ -56,6 +59,10 @@ export function DebugOverlay({ tiltX, tiltY, isReady }: Props) {
       {row('tiltY',      tiltY.toFixed(3))}
       {row('raw.gamma',  raw.gamma === -999 ? 'undefined' : raw.gamma.toFixed(4) + ' rad')}
       {row('raw.beta',   raw.beta  === -999 ? 'undefined' : raw.beta.toFixed(4)  + ' rad')}
+      {row('gamma°',     raw.gamma === -999 ? '—' : (raw.gamma * RAD_TO_DEG).toFixed(1) + '°')}
+      {row('beta°',      raw.beta  === -999 ? '—' : (raw.beta  * RAD_TO_DEG).toFixed(1) + '°')}
+      {row('neutral γ°', neutral ? neutral.gamma.toFixed(1) + '°' : '—')}
+      {row('neutral β°', neutral ? neutral.beta.toFixed(1)  + '°' : '—')}
       {row('fire count', String(raw.fireCount))}
       {error && <Text style={styles.error}>{error}</Text>}
     </View>

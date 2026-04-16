@@ -25,6 +25,8 @@ export interface OrientationState {
   tiltX: number;
   tiltY: number;
   isReady: boolean;
+  /** Neutral reference pose captured on first event, in degrees. null until ready. */
+  neutral: { gamma: number; beta: number } | null;
 }
 
 interface UseDeviceOrientationOptions {
@@ -51,6 +53,7 @@ export function useDeviceOrientation({
     tiltX: 0,
     tiltY: 0,
     isReady: false,
+    neutral: null,
   });
 
   const smoothed = useRef({ x: 0, y: 0 });
@@ -72,8 +75,8 @@ export function useDeviceOrientation({
     const { maxAngleDeg: max, smoothing: s } = optsRef.current;
     const clamp = (v: number) => Math.max(-1, Math.min(1, v / max));
 
-    smoothed.current.x = smoothed.current.x * s + clamp(relX) * (1 - s);
-    smoothed.current.y = smoothed.current.y * s + clamp(relY) * (1 - s);
+    smoothed.current.x = smoothed.current.x * s - clamp(relX) * (1 - s);
+    smoothed.current.y = smoothed.current.y * s - clamp(relY) * (1 - s);
 
     // Drive animation directly — bypasses React render cycle entirely
     animX.setValue(smoothed.current.x);
@@ -83,7 +86,12 @@ export function useDeviceOrientation({
     // triggering 60 re-renders per second
     if (!isReadyRef.current) {
       isReadyRef.current = true;
-      setState({ tiltX: smoothed.current.x, tiltY: smoothed.current.y, isReady: true });
+      setState({
+        tiltX: smoothed.current.x,
+        tiltY: smoothed.current.y,
+        isReady: true,
+        neutral: { gamma: neutral.current.x, beta: neutral.current.y },
+      });
     }
   });
 

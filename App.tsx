@@ -16,7 +16,7 @@ export default function App() {
   const animX = useRef(new Animated.Value(0)).current;
   const animY = useRef(new Animated.Value(0)).current;
 
-  const { tiltX, tiltY, isReady } = useDeviceOrientation({
+  const { tiltX, tiltY, isReady, neutral } = useDeviceOrientation({
     animX,
     animY,
     maxAngleDeg: 25,
@@ -37,7 +37,7 @@ export default function App() {
       />
 
       <WindowFrame />
-      <DebugOverlay tiltX={tiltX} tiltY={tiltY} isReady={isReady} />
+      <DebugOverlay tiltX={tiltX} tiltY={tiltY} isReady={isReady} neutral={neutral} />
 
       {!isReady && (
         <View style={styles.hintContainer}>
