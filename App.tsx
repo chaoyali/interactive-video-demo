@@ -6,9 +6,9 @@ import { useDeviceOrientation } from './src/hooks/useDeviceOrientation';
 import { WindowViewer } from './src/components/WindowViewer';
 import { DebugOverlay } from './src/components/DebugOverlay';
 
-const SCENE = require('./images/window-view.png');
-const IMAGE_ASPECT = 1.0; // window-view.png is 2048×2048 (square)
-const ZOOM = 1.3;         // 30% overhang on the shorter viewport axis
+const SCENE = require('./videos/room.mp4');
+const SOURCE_ASPECT = 1.0; // room.mp4 is 720×720 (square)
+const ZOOM = 1.3;          // 30% overhang on the shorter viewport axis
 
 export default function App() {
   // Animated values are driven directly by the sensor callback in the hook —
@@ -29,7 +29,7 @@ export default function App() {
 
       <WindowViewer
         source={SCENE}
-        imageAspect={IMAGE_ASPECT}
+        sourceAspect={SOURCE_ASPECT}
         zoom={ZOOM}
         animatedX={animX}
         animatedY={animY}
