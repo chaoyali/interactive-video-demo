@@ -9,8 +9,8 @@ An interactive mobile experience where the viewer physically tilts their phone t
 ## User Experience
 
 1. The viewer holds their phone upright in portrait mode.
-2. A dark window frame fills the screen. Behind it: a dimly lit interior scene.
-3. Tilting the phone left/right/up/down pans the scene, revealing what is hidden at the edges.
+2. A looping ambient video fills the screen — a dimly lit interior scene that extends beyond the viewport on every side.
+3. Tilting the phone left/right/up/down pans the scene, revealing what is hidden at the edges. At full tilt, every part of the video is reachable.
 4. The viewer controls the "camera" through physical movement alone — no buttons, no touch.
 
 ---
@@ -26,11 +26,10 @@ An interactive mobile experience where the viewer physically tilts their phone t
 │   useDeviceOrientation (hook)       │  Platform-aware sensor abstraction
 │   three input paths (see below)     │  iOS, Android, web mobile, web desktop
 ├─────────────────────────────────────┤
-│   WindowViewer (component)          │  Panning image renderer
+│   WindowViewer (component)          │  Panning media renderer (expo-video)
 │   Animated.Value.interpolate        │  Direct sensor→transform mapping
 ├─────────────────────────────────────┤
-│   WindowFrame (component)           │  Decorative overlay
-│   Pure RN StyleSheet, no assets     │
+│   DebugOverlay (component)          │  Dev-only diagnostics (native)
 └─────────────────────────────────────┘
 ```
 
@@ -56,17 +55,15 @@ App.tsx
   - NO spring / no JS state on the hot path
       │
       ▼
-WindowViewer
-  - panoramic image wider than viewport (width = viewportH × imageAspect)
+WindowViewer  (content-agnostic — pans whatever View sits inside it)
+  - wraps expo-video's VideoView with Animated.createAnimatedComponent
+  - video autoplays, muted, looping via useVideoPlayer
+  - cover-size the media to the viewport (preserving sourceAspect), then × zoom
+       coverH = max(vh, vw / sourceAspect);  coverW = coverH × sourceAspect
+       mediaH = coverH × zoom;               mediaW = coverW × zoom
+  - maxOffset{X,Y} = (media{W,H} − viewport{W,H}) / 2    (pure overhang math)
   - animX.interpolate([-1,1] → [+maxOffsetX, -maxOffsetX])  ← sign flipped
   - animY.interpolate([-1,1] → [+maxOffsetY, -maxOffsetY])  ← tilt fwd = pan down
-  - maxOffset = viewport{W,H} × panRange{X,Y}
-      │
-      ▼
-WindowFrame (rendered on top, pointerEvents in style)
-  - dark edge vignette
-  - wooden cross-bar frame
-  - corner brackets
 ```
 
 ---
@@ -76,17 +73,17 @@ WindowFrame (rendered on top, pointerEvents in style)
 ```
 /
 ├── App.tsx                           # Root: wires sensor → animation → render
-├── app.json                          # Expo config + iOS motion permission
-├── images/
-│   └── window-view.png               # Panoramic scene asset
+├── app.json                          # Expo config + iOS motion permission + expo-video plugin
+├── videos/
+│   └── room.mp4                      # Ambient scene (720×720, square)
 ├── design-docs/
 │   └── architecture.md               # This file
 └── src/
     ├── hooks/
     │   └── useDeviceOrientation.ts   # Platform-aware sensor abstraction
     └── components/
-        ├── WindowViewer.tsx          # Panning image renderer
-        └── WindowFrame.tsx           # Window frame overlay
+        ├── WindowViewer.tsx          # Panning video renderer (expo-video)
+        └── DebugOverlay.tsx          # Dev-only sensor diagnostics (native)
 ```
 
 ---
@@ -116,13 +113,15 @@ Tradeoff vs. the prior spring-based design: we lose the spring's physical "weigh
 ### Low-pass filter on raw sensor input
 Raw gyroscope data is noisy. An exponential low-pass filter (`smoothed = smoothed*s + new*(1-s)`, default `s = 0.6`) is applied inside the hook before the clamped value is written to the `Animated.Value`.
 
-### Panoramic image as "canvas"
-The scene is a single wide static image (3:1 to 4:1 aspect ratio). This avoids video complexity while still giving the viewer a space to explore. An ambient looping video can be substituted later with no architectural changes — `WindowViewer` accepts any `ImageSourcePropType`.
+### Content-agnostic viewer with zoom-based sizing
+`WindowViewer` doesn't know it's rendering video. It sizes a rectangle (preserving `sourceAspect`) to "cover" the viewport, multiplies by `zoom` to create overhang on every side, and animates that box's `translateX` / `translateY`. Pan ranges are derived from the overhang, so tilt always reaches the exact media edges — no unreachable content, no black bars. Swapping video ↔ image ↔ WebGL view is a one-line content swap inside the viewer.
+
+### Looping muted video via `expo-video`
+The scene is an ambient `.mp4` loaded with `useVideoPlayer`, configured `loop = true` + `muted = true` + `play()` on creation. Muted autoplay is reliable across platforms and matches the ambience-only UX. `VideoView` is wrapped with `Animated.createAnimatedComponent` so it accepts the same animated `transform` style as any other View. Registered in `app.json` under `plugins`.
 
 ### Cross-platform style compatibility
-React Native Web deprecates certain style props. Two rules applied throughout:
+React Native Web deprecates certain style props. Rule applied throughout:
 - `pointerEvents` lives in `style`, not as a JSX prop
-- Shadows use `Platform.select` — `boxShadow` string on web, `shadow*` props on native
 
 ---
 
@@ -133,17 +132,18 @@ React Native Web deprecates certain style props. Two rules applied throughout:
 | `maxAngleDeg` | `App.tsx` → hook | Physical tilt angle that maps to full pan. Default 25°. Lower = more sensitive. |
 | `smoothing` | `App.tsx` → hook | 0 = raw/instant, 1 = never moves. Default 0.6. Controls jitter removal and perceived lag. |
 | `intervalMs` | `App.tsx` → hook | Native sensor sample interval. Default 16ms (~60 Hz). Web uses whatever the browser emits. |
-| `IMAGE_ASPECT` | `App.tsx` | Set to your image's actual width÷height ratio. |
-| `panRangeX/Y` | `WindowViewer` props | Fraction of viewport the image travels. Default 0.6 / 0.3. |
+| `SOURCE_ASPECT` | `App.tsx` | Set to the source media's actual width÷height ratio. Mismatch = stretched or cropped content. |
+| `ZOOM` | `App.tsx` → `WindowViewer` | How far past "just covering" the viewport to scale the media. Default 1.3. Larger = more to explore. |
 
 ---
 
 ## Scene Asset Requirements
 
-- **Aspect ratio:** 3:1 to 4:1 (wide panoramic)
-- **Resolution:** 3000×800 px minimum for smooth panning without visible pixelation
-- **Content:** Interior scene, lit from within. Place the most interesting element off-center so the viewer is rewarded for exploring.
-- **Format:** PNG or JPEG. Static image recommended for first version; ambient looping video is a straightforward upgrade path.
+- **Format:** MP4 (H.264). Bundled with the app via `require('./videos/…')`.
+- **Aspect ratio:** Any — declare it in `SOURCE_ASPECT`. Current asset is 1:1 (720×720).
+- **Resolution:** High enough that the `ZOOM`-scaled media still looks sharp on target devices. For `zoom = 1.3` on a 3× density phone, aim for the source's shorter side ≥ viewport-shorter × 3 × 1.3.
+- **Duration:** Short loop (5–15 s). Muted, so no audio design needed — keep the visual loop seamless.
+- **Content:** Interior scene, lit from within. Place points of interest toward the edges so the viewer is rewarded for tilting to explore.
 
 ---
 
@@ -151,8 +151,8 @@ React Native Web deprecates certain style props. Two rules applied throughout:
 
 | Idea | Notes |
 |---|---|
-| Ambient video loop | Swap static image for a `<Video>` component. Hook and frame are unchanged. |
-| Sound tied to pan position | Play audio cues as viewer tilts toward specific areas of the scene. |
-| Multiple scenes / story branching | Navigator between scenes based on what the viewer "finds" by tilting. |
-| 360° equirectangular render | Replace `WindowViewer` with a Three.js / WebGL sphere. Same hook interface. |
+| Sound tied to pan position | Unmute the player and play positional audio cues as the viewer tilts toward specific areas. Needs a gesture to unlock audio on some platforms. |
+| Multiple scenes / story branching | Navigator between scenes based on what the viewer "finds" by tilting. Swap `source` on `useVideoPlayer`. |
+| 360° equirectangular render | Replace `WindowViewer` with a Three.js / WebGL sphere. Hook interface is unchanged. |
 | Haptic feedback | Trigger `expo-haptics` when panning past a point of interest. |
+| Remove `DebugOverlay` | It's dev-only. Delete the component and its render site when shipping. |
