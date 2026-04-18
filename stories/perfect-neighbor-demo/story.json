@@ -1,0 +1,261 @@
+{
+  "id": "perfect-neighbor-demo",
+  "title": "Perfect Neighbor — Demo",
+  "version": 1,
+  "initialNodeId": "N-000",
+  "initialFlags": {
+    "reviewedPie": false,
+    "reviewedBoard": false,
+    "reviewedGroupChat": false
+  },
+  "nodes": {
+    "N-000": {
+      "id": "N-000",
+      "label": "Iris Move-In Date",
+      "kind": "N",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "linear", "next": "H-010" },
+      "director": {
+        "sceneLocation": "EXT. MAPLEWOOD CIRCLE / IRIS HOUSE",
+        "timeOfDay": "Late afternoon, golden hour",
+        "photography": "Stable 35mm/40mm medium-wide. Advertising-film order. Leave empty frames and windows to suggest someone watching.",
+        "soundDesign": [
+          "Distant lawn mower that stops mid-scene",
+          "Single dog bark that cuts off quickly",
+          "Phone alert: neighborhood group chat invitation"
+        ],
+        "beats": [
+          "Iris unloads boxes alone",
+          "Evan appears with pie; Mara helps carry a box in",
+          "Leasing-office info is suspiciously specific",
+          "Mara pushes bulletin board + book club"
+        ]
+      }
+    },
+
+    "H-010": {
+      "id": "H-010",
+      "label": "Welcome to the Community",
+      "kind": "H",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0, "loop": true },
+      "interaction": {
+        "type": "hub",
+        "choices": [
+          {
+            "id": "return-pie",
+            "label": "Return the pie plate to Evan",
+            "next": "N-011",
+            "onSelect": [{ "flag": "reviewedPie", "value": true }]
+          },
+          {
+            "id": "check-board",
+            "label": "Check community announcement",
+            "next": "N-012",
+            "onSelect": [{ "flag": "reviewedBoard", "value": true }]
+          },
+          {
+            "id": "read-group",
+            "label": "View welcome message in neighborhood group chat",
+            "next": "N-013",
+            "onSelect": [{ "flag": "reviewedGroupChat", "value": true }]
+          }
+        ],
+        "advanceWhen": {
+          "op": "all",
+          "conditions": [
+            { "op": "eq", "flag": "reviewedPie", "value": true },
+            { "op": "eq", "flag": "reviewedBoard", "value": true },
+            { "op": "eq", "flag": "reviewedGroupChat", "value": true }
+          ]
+        },
+        "advanceTo": "N-020"
+      },
+      "director": {
+        "sceneLocation": "INT. IRIS KITCHEN / LIVING ROOM",
+        "timeOfDay": "Evening into blue hour",
+        "beats": [
+          "Iris eats the last slice of pie alone",
+          "Group-chat invite sits on her phone; curtains are drawn on every house",
+          "She decides to explore before settling"
+        ]
+      }
+    },
+
+    "N-011": {
+      "id": "N-011",
+      "label": "Return the pie plate to Evan",
+      "kind": "N",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "linear", "next": "H-010" },
+      "director": {
+        "sceneLocation": "INT. IRIS KITCHEN / EXT. EVAN HOUSE",
+        "timeOfDay": "Blue hour",
+        "beats": [
+          "Evan opens the door before Iris rings",
+          "He knows she starts work this week (she never told him)",
+          "Glimpses inside: red heels, lipstick glass, cold white light under a door",
+          "Evan primes 'noises are normal in houses like these'"
+        ],
+        "soundDesign": [
+          "Evan's house is too quiet",
+          "Distant click before sprinkler system turns on",
+          "Very faint low-frequency hum from behind the closed door"
+        ]
+      }
+    },
+
+    "N-012": {
+      "id": "N-012",
+      "label": "View Community Announcement",
+      "kind": "N",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "linear", "next": "H-010" },
+      "director": {
+        "sceneLocation": "EXT. COMMUNITY MAILBOXES / BULLETIN BOARD",
+        "timeOfDay": "Blue hour",
+        "beats": [
+          "Board is overly orderly; cold white light, no one around",
+          "'After 10 PM, report through Resident Support. Do not knock on neighbors' doors.'",
+          "Courtesy Walk schedule densely lists Evan's name",
+          "Formally printed 'Welcome, Iris Lin — Unit 17' already on the board"
+        ]
+      }
+    },
+
+    "N-013": {
+      "id": "N-013",
+      "label": "View Neighborhood Group Welcome Message",
+      "kind": "N",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "linear", "next": "H-010" },
+      "director": {
+        "sceneLocation": "INT. IRIS LIVING ROOM / KITCHEN",
+        "timeOfDay": "Night",
+        "beats": [
+          "Rapid welcome messages, weirdly specific ('Loved your yellow lamp')",
+          "A 6:08 PM photo pops up: Iris accepting pie, shot from across the street"
+        ]
+      }
+    },
+
+    "N-020": {
+      "id": "N-020",
+      "label": "Abnormal Noise on the First Night",
+      "kind": "N",
+      "video": {
+        "src": "videos/room.mp4",
+        "sourceAspect": 1.0,
+        "loop": true
+      },
+      "interaction": {
+        "type": "tilt-look",
+        "next": "C-030",
+        "maxAngleDeg": 25,
+        "zoom": 1.3
+      },
+      "director": {
+        "sceneLocation": "INT. IRIS BEDROOM / WINDOW ON MARA'S SIDE YARD",
+        "timeOfDay": "12:14 AM",
+        "photography": "Tilt-to-look: viewer physically lifts a blind-slat to peer out at Mara's side yard. POV embodied.",
+        "beats": [
+          "Metal crash outside; heavy scrape across concrete",
+          "Iris lifts a blind slat — reveal: Evan dragging a black body bag into Mara's garage",
+          "Group chat: 'Mara is feeling unwell and won't make the book club tomorrow.'"
+        ],
+        "soundDesign": [
+          "Wall contraction, AC hum, audible breathing",
+          "Metal crash → dead silence → dragging sound",
+          "Crickets dominate once Iris reaches the window"
+        ]
+      }
+    },
+
+    "C-030": {
+      "id": "C-030",
+      "label": "What should Iris do now?",
+      "kind": "C",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0, "loop": true },
+      "interaction": {
+        "type": "choice",
+        "choices": [
+          { "id": "ask-group",    "label": "Ask in the group: \"How's Mara?\"",               "next": "D-031" },
+          { "id": "record-time",  "label": "Record the time and keep watching",                "next": "D-033" },
+          { "id": "call-support", "label": "Leave a voice message for Resident Support",       "next": "D-032" },
+          { "id": "break-in",     "label": "Break into Evan's backyard",                       "next": "N-040" }
+        ]
+      },
+      "director": {
+        "beats": [
+          "Choice presented over Iris's shaking POV at the window",
+          "Screenplay notes: 1, 2, 3 lead to death; 4 leads to survival"
+        ]
+      }
+    },
+
+    "D-031": {
+      "id": "D-031",
+      "label": "Ask in the group \"Is Mara okay?\"",
+      "kind": "D",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "ending", "outcome": "death" },
+      "director": {
+        "beats": [
+          "Instant typing indicators from neighbors, too fast",
+          "A just-taken photo of Iris's window appears in the group: 'You're still up.'",
+          "Porch lights come on one by one; three soft knocks; bedroom door lock clicks open"
+        ]
+      }
+    },
+
+    "D-032": {
+      "id": "D-032",
+      "label": "Voicemail to Resident Support",
+      "kind": "D",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "ending", "outcome": "death" },
+      "director": {
+        "beats": [
+          "Automated line: 'This call may be monitored or shared for community safety.'",
+          "Background noise outside cuts out — someone stopped moving",
+          "Motion lights snap on, silhouetting Iris in the window",
+          "Back-door handle is pressed while male voice calls her to the front door"
+        ]
+      }
+    },
+
+    "D-033": {
+      "id": "D-033",
+      "label": "Keep watching through the blinds",
+      "kind": "D",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "ending", "outcome": "death" },
+      "director": {
+        "beats": [
+          "Evan pauses mid-drag, looks up directly at Iris's window",
+          "He smiles and waves across the yard",
+          "Doorbell — polite, not urgent — rings twice"
+        ]
+      }
+    },
+
+    "N-040": {
+      "id": "N-040",
+      "label": "Climbed into Evan's backyard",
+      "kind": "N",
+      "video": { "src": "videos/room.mp4", "sourceAspect": 1.0 },
+      "interaction": { "type": "ending", "outcome": "survive-cliffhanger" },
+      "director": {
+        "sceneLocation": "EXT. EVAN'S HOUSE SIDE WALL / BASEMENT WINDOW / TRASH CAN",
+        "timeOfDay": "Night",
+        "beats": [
+          "Dark red smear leads from basement window into the house",
+          "Wet light-colored fabric caught under a doormat; wine glass with lipstick",
+          "Trash: bleach bottle, disposable gloves, blood streak on inner rim",
+          "Surveillance camera under eaves is aimed at Iris's own front door",
+          "Iris steps on gravel — water inside the house stops"
+        ],
+        "photography": "Future pass: likely another tilt-look or tap-hotspot scene (examine trash / peek through basement window). Ending placeholder for demo milestone."
+      }
+    }
+  }
+}
