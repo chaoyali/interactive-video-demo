@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   choice: {
     width: 360,
-    backgroundColor: 'rgba(12,4,4,0.9)',
+    backgroundColor: 'rgba(12,4,4,0.5)',
     borderColor: 'rgba(160,20,20,0.6)',
     borderWidth: 1,
     borderRadius: 6,
