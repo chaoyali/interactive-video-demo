@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
     padding: 24,
-    paddingBottom: 48,
+    paddingBottom: 20,
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   prompt: {
