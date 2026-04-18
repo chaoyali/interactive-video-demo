@@ -1,18 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { validateStory } from '@ivd/shared';
 
 import { StoryEngine } from './src/engine/StoryEngine';
+import { SplashScreen } from './src/components/SplashScreen';
 import storyJson from '../stories/perfect-neighbor-demo/story.json';
 
 export default function App() {
+  const [started, setStarted] = useState(false);
   const result = validateStory(storyJson);
 
   return (
     <View style={styles.root}>
       <StatusBar style="light" hidden />
-      {result.ok ? (
+      {!started ? (
+        <SplashScreen onStart={() => setStarted(true)} />
+      ) : result.ok ? (
         <StoryEngine story={result.story} />
       ) : (
         <ScrollView contentContainerStyle={styles.errorBox}>
