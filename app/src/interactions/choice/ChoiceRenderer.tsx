@@ -18,19 +18,32 @@ export const ChoiceRenderer: InteractionRenderer<ChoiceInteraction> = ({
     (c) => !c.condition || evaluateCondition(c.condition, flags)
   );
 
+  // Pair choices into rows of 2; last row may have 1 item spanning full width
+  const rows: (typeof visibleChoices)[] = [];
+  for (let i = 0; i < visibleChoices.length; i += 2) {
+    rows.push(visibleChoices.slice(i, i + 2));
+  }
+
   return (
     <NodeVideoBackground video={node.video}>
       <View style={styles.overlay} pointerEvents="box-none">
         <Text style={styles.prompt}>{node.label}</Text>
         <View style={styles.choiceList}>
-          {visibleChoices.map((choice) => (
-            <Pressable
-              key={choice.id}
-              style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
-              onPress={() => onTransition(choice.next, choice.onSelect)}
-            >
-              <Text style={styles.choiceText}>{choice.label}</Text>
-            </Pressable>
+          {rows.map((row, rowIdx) => (
+            <View key={rowIdx} style={styles.row}>
+              {row.map((choice) => (
+                <Pressable
+                  key={choice.id}
+                  style={({ pressed }) => [
+                    styles.choice,
+                    pressed && styles.choicePressed,
+                  ]}
+                  onPress={() => onTransition(choice.next, choice.onSelect)}
+                >
+                  <Text style={styles.choiceText}>{choice.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           ))}
         </View>
       </View>
@@ -43,35 +56,45 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
     padding: 24,
-    paddingBottom: 48,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   prompt: {
-    color: '#fff',
+    color: '#e8d5b7',
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 16,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0,0,0,0.95)',
+    textShadowRadius: 6,
+    letterSpacing: 0.5,
   },
   choiceList: {
     gap: 10,
+    alignItems: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 10,
   },
   choice: {
-    backgroundColor: 'rgba(20,20,22,0.85)',
-    borderColor: 'rgba(255,255,255,0.25)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
+    width: 360,
+    backgroundColor: 'rgba(12,4,4,0.5)',
+    borderColor: 'rgba(160,20,20,0.6)',
+    borderWidth: 1,
+    borderRadius: 6,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
+    alignItems: 'center',
   },
   choicePressed: {
-    backgroundColor: 'rgba(60,60,70,0.95)',
+    backgroundColor: 'rgba(80,8,8,0.95)',
+    borderColor: 'rgba(200,40,40,0.9)',
   },
   choiceText: {
-    color: '#f5f5f7',
-    fontSize: 15,
-    letterSpacing: 0.2,
+    color: '#e8d5b7',
+    fontSize: 14,
+    letterSpacing: 0.4,
+    textAlign: 'center',
   },
 });

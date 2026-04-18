@@ -32,26 +32,35 @@ export const HubRenderer: InteractionRenderer<HubInteraction> = ({
   const availableChoices = interaction.choices.filter((c) => !hubVisits.has(c.id));
   const completedCount = interaction.choices.length - availableChoices.length;
 
+  const rows: (typeof availableChoices)[] = [];
+  for (let i = 0; i < availableChoices.length; i += 2) {
+    rows.push(availableChoices.slice(i, i + 2));
+  }
+
   return (
     <NodeVideoBackground video={node.video}>
       <View style={styles.overlay} pointerEvents="box-none">
         <Text style={styles.prompt}>{node.label}</Text>
 
         <View style={styles.choiceList}>
-          {availableChoices.map((choice) => (
-            <Pressable
-              key={choice.id}
-              style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
-              onPress={() =>
-                onTransition(
-                  choice.next,
-                  choice.onSelect,
-                  { hubId: node.id, choiceId: choice.id }
-                )
-              }
-            >
-              <Text style={styles.choiceText}>{choice.label}</Text>
-            </Pressable>
+          {rows.map((row, rowIdx) => (
+            <View key={rowIdx} style={styles.row}>
+              {row.map((choice) => (
+                <Pressable
+                  key={choice.id}
+                  style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
+                  onPress={() =>
+                    onTransition(
+                      choice.next,
+                      choice.onSelect,
+                      { hubId: node.id, choiceId: choice.id }
+                    )
+                  }
+                >
+                  <Text style={styles.choiceText}>{choice.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           ))}
         </View>
 
@@ -71,37 +80,45 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
     padding: 24,
-    paddingBottom: 48,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   prompt: {
-    color: '#fff',
+    color: '#e8d5b7',
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 16,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0,0,0,0.95)',
+    textShadowRadius: 6,
+    letterSpacing: 0.5,
   },
-  choiceList: { gap: 10 },
+  choiceList: { gap: 10, alignItems: 'center' },
+  row: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   choice: {
-    backgroundColor: 'rgba(20,20,22,0.85)',
-    borderColor: 'rgba(255,255,255,0.25)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
+    width: 360,
+    backgroundColor: 'rgba(12,4,4,0.5)',
+    borderColor: 'rgba(160,20,20,0.6)',
+    borderWidth: 1,
+    borderRadius: 6,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
+    alignItems: 'center',
   },
-  choicePressed: { backgroundColor: 'rgba(60,60,70,0.95)' },
+  choicePressed: { backgroundColor: 'rgba(80,8,8,0.95)', borderColor: 'rgba(200,40,40,0.9)' },
   choiceText: {
-    color: '#f5f5f7',
-    fontSize: 15,
-    letterSpacing: 0.2,
+    color: '#e8d5b7',
+    fontSize: 14,
+    letterSpacing: 0.4,
+    textAlign: 'center',
   },
   progress: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(160,20,20,0.8)',
     fontSize: 12,
-    letterSpacing: 0.4,
+    letterSpacing: 0.6,
     textAlign: 'center',
     marginTop: 14,
   },
