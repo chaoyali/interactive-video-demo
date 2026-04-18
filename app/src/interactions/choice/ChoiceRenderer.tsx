@@ -36,7 +36,6 @@ export const ChoiceRenderer: InteractionRenderer<ChoiceInteraction> = ({
                   key={choice.id}
                   style={({ pressed }) => [
                     styles.choice,
-                    row.length === 1 && styles.choiceFull,
                     pressed && styles.choicePressed,
                   ]}
                   onPress={() => onTransition(choice.next, choice.onSelect)}
@@ -72,13 +71,14 @@ const styles = StyleSheet.create({
   },
   choiceList: {
     gap: 10,
+    alignItems: 'center',
   },
   row: {
     flexDirection: 'row',
     gap: 10,
   },
   choice: {
-    flex: 1,
+    width: 160,
     backgroundColor: 'rgba(12,4,4,0.9)',
     borderColor: 'rgba(160,20,20,0.6)',
     borderWidth: 1,
@@ -86,9 +86,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 14,
     alignItems: 'center',
-  },
-  choiceFull: {
-    flex: 1,
   },
   choicePressed: {
     backgroundColor: 'rgba(80,8,8,0.95)',
