@@ -32,26 +32,35 @@ export const HubRenderer: InteractionRenderer<HubInteraction> = ({
   const availableChoices = interaction.choices.filter((c) => !hubVisits.has(c.id));
   const completedCount = interaction.choices.length - availableChoices.length;
 
+  const rows: (typeof availableChoices)[] = [];
+  for (let i = 0; i < availableChoices.length; i += 2) {
+    rows.push(availableChoices.slice(i, i + 2));
+  }
+
   return (
     <NodeVideoBackground video={node.video}>
       <View style={styles.overlay} pointerEvents="box-none">
         <Text style={styles.prompt}>{node.label}</Text>
 
         <View style={styles.choiceList}>
-          {availableChoices.map((choice) => (
-            <Pressable
-              key={choice.id}
-              style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
-              onPress={() =>
-                onTransition(
-                  choice.next,
-                  choice.onSelect,
-                  { hubId: node.id, choiceId: choice.id }
-                )
-              }
-            >
-              <Text style={styles.choiceText}>{choice.label}</Text>
-            </Pressable>
+          {rows.map((row, rowIdx) => (
+            <View key={rowIdx} style={styles.row}>
+              {row.map((choice) => (
+                <Pressable
+                  key={choice.id}
+                  style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
+                  onPress={() =>
+                    onTransition(
+                      choice.next,
+                      choice.onSelect,
+                      { hubId: node.id, choiceId: choice.id }
+                    )
+                  }
+                >
+                  <Text style={styles.choiceText}>{choice.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           ))}
         </View>
 
@@ -85,7 +94,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   choiceList: { gap: 10 },
+  row: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   choice: {
+    flex: 1,
     backgroundColor: 'rgba(12,4,4,0.9)',
     borderColor: 'rgba(160,20,20,0.6)',
     borderWidth: 1,
