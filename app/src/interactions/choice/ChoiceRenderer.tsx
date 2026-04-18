@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   choice: {
-    width: 220,
+    width: 300,
     backgroundColor: 'rgba(12,4,4,0.9)',
     borderColor: 'rgba(160,20,20,0.6)',
     borderWidth: 1,
